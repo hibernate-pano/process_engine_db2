@@ -20,6 +20,11 @@ public class FlowNode implements Serializable {
     private String id;
 
     /**
+     * 节点名称
+     */
+    private String name;
+
+    /**
      * 节点类型
      */
     private String type;
@@ -58,4 +63,9 @@ public class FlowNode implements Serializable {
      * 节点数据
      */
     private Map<String, Object> data = new HashMap<>();
+
+    /**
+     * 节点配置属性
+     */
+    private Map<String, Object> properties;
 } 

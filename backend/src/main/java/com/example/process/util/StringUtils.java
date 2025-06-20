@@ -34,7 +34,15 @@ public class StringUtils {
      * @return 是否为空白
      */
     public static boolean isBlank(String str) {
-        return str == null || str.trim().isEmpty();
+        if (isEmpty(str)) {
+            return true;
+        }
+        for (int i = 0; i < str.length(); i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -101,28 +109,70 @@ public class StringUtils {
     }
 
     /**
-     * 首字母大写
+     * 判断字符串是否包含指定字符串
+     *
+     * @param str     字符串
+     * @param subStr  指定字符串
+     * @return 是否包含
+     */
+    public static boolean contains(String str, String subStr) {
+        if (isEmpty(str) || isEmpty(subStr)) {
+            return false;
+        }
+        return str.contains(subStr);
+    }
+
+    /**
+     * 判断字符串是否以指定字符串开头
+     *
+     * @param str    字符串
+     * @param prefix 前缀
+     * @return 是否以指定字符串开头
+     */
+    public static boolean startsWith(String str, String prefix) {
+        if (isEmpty(str) || isEmpty(prefix)) {
+            return false;
+        }
+        return str.startsWith(prefix);
+    }
+
+    /**
+     * 判断字符串是否以指定字符串结尾
+     *
+     * @param str    字符串
+     * @param suffix 后缀
+     * @return 是否以指定字符串结尾
+     */
+    public static boolean endsWith(String str, String suffix) {
+        if (isEmpty(str) || isEmpty(suffix)) {
+            return false;
+        }
+        return str.endsWith(suffix);
+    }
+
+    /**
+     * 将字符串首字母大写
      *
      * @param str 字符串
-     * @return 首字母大写后的字符串
+     * @return 首字母大写的字符串
      */
     public static String capitalize(String str) {
         if (isEmpty(str)) {
             return str;
         }
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
+        return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
     /**
-     * 首字母小写
+     * 将字符串首字母小写
      *
      * @param str 字符串
-     * @return 首字母小写后的字符串
+     * @return 首字母小写的字符串
      */
     public static String uncapitalize(String str) {
         if (isEmpty(str)) {
             return str;
         }
-        return str.substring(0, 1).toLowerCase() + str.substring(1);
+        return Character.toLowerCase(str.charAt(0)) + str.substring(1);
     }
 } 

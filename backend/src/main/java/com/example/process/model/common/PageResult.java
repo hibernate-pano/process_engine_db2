@@ -1,6 +1,8 @@
 package com.example.process.model.common;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
 import java.io.Serializable;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
  * @param <T> 数据类型
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PageResult<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -57,6 +61,17 @@ public class PageResult<T> implements Serializable {
      * 是否为空
      */
     private boolean empty;
+
+    public PageResult(List<T> dtoList, long totalElements, Integer pageNum, Integer pageSize) {
+        this.content = dtoList;
+        this.totalElements = totalElements;
+        this.totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        this.page = pageNum;
+        this.size = pageSize;
+        this.first = pageNum == 0;
+        this.last = pageNum == totalPages - 1;
+        this.empty = dtoList.isEmpty();
+    }
 
     /**
      * 从Spring Data分页结果转换

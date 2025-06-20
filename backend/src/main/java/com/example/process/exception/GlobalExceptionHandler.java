@@ -15,8 +15,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.ResponseEntity;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -27,41 +30,60 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     /**
-     * 处理自定义业务异常
+     * 处理业务异常
+     *
+     * @param e 业务异常
+     * @return 错误响应
      */
     @ExceptionHandler(BusinessException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleBusinessException(BusinessException e) {
-        log.error("业务异常：{}", e.getMessage(), e);
-        return ApiResponse.error(e.getCode(), e.getMessage());
+    public ResponseEntity<Map<String, Object>> handleBusinessException(BusinessException e) {
+        log.error("业务异常: {}", e.getMessage());
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", e.getCode());
+        response.put("message", e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     /**
      * 处理参数校验异常
+     *
+     * @param e 参数校验异常
+     * @return 错误响应
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<List<String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        log.error("参数校验异常：{}", e.getMessage(), e);
-        List<String> errors = e.getBindingResult().getFieldErrors()
-                .stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.toList());
-        return ApiResponse.<List<String>>error(400, "参数校验失败").setData(errors);
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException e) {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, String> errors = new HashMap<>();
+        e.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        response.put("code", "400");
+        response.put("message", "参数校验失败");
+        response.put("errors", errors);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     /**
      * 处理绑定异常
+     *
+     * @param e 绑定异常
+     * @return 错误响应
      */
     @ExceptionHandler(BindException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<List<String>> handleBindException(BindException e) {
-        log.error("参数绑定异常：{}", e.getMessage(), e);
-        List<String> errors = e.getBindingResult().getFieldErrors()
-                .stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.toList());
-        return ApiResponse.<List<String>>error(400, "参数绑定失败").setData(errors);
+    public ResponseEntity<Map<String, Object>> handleBindException(BindException e) {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, String> errors = new HashMap<>();
+        e.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        response.put("code", "400");
+        response.put("message", "参数绑定失败");
+        response.put("errors", errors);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -125,12 +147,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理所有未捕获的异常
+     * 处理其他异常
+     *
+     * @param e 异常
+     * @return 错误响应
      */
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiResponse<Void> handleException(Exception e) {
-        log.error("系统异常：{}", e.getMessage(), e);
-        return ApiResponse.error(500, "系统内部错误，请联系管理员");
+    public ResponseEntity<Map<String, Object>> handleException(Exception e) {
+        log.error("系统异常", e);
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", "500");
+        response.put("message", "系统内部错误");
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 } 

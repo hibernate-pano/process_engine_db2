@@ -18,6 +18,40 @@ import java.util.Optional;
 public interface FlowVersionRepository extends JpaRepository<FlowVersion, Long> {
 
     /**
+     * 根据流程定义ID查询流程版本列表
+     *
+     * @param flowDefinitionId 流程定义ID
+     * @return 流程版本列表
+     */
+    List<FlowVersion> findByFlowDefinitionId(Long flowDefinitionId);
+
+    /**
+     * 根据流程定义ID分页查询流程版本
+     *
+     * @param flowDefinitionId 流程定义ID
+     * @param pageable        分页参数
+     * @return 流程版本分页结果
+     */
+    Page<FlowVersion> findByFlowDefinitionId(Long flowDefinitionId, Pageable pageable);
+
+    /**
+     * 根据流程定义ID和版本号查询流程版本
+     *
+     * @param flowDefinitionId 流程定义ID
+     * @param version         版本号
+     * @return 流程版本
+     */
+    Optional<FlowVersion> findByFlowDefinitionIdAndVersion(Long flowDefinitionId, Integer version);
+
+    /**
+     * 根据流程定义ID查询最新版本
+     *
+     * @param flowDefinitionId 流程定义ID
+     * @return 最新版本
+     */
+    Optional<FlowVersion> findTopByFlowDefinitionIdOrderByVersionDesc(Long flowDefinitionId);
+
+    /**
      * 根据流程定义ID和版本号查询未删除的流程版本
      *
      * @param flowDefinitionId 流程定义ID

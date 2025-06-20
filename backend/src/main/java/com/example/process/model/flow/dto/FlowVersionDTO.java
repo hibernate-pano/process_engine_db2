@@ -110,7 +110,7 @@ public class FlowVersionDTO implements Serializable {
         
         // 解析流程图数据
         if (flowVersion.getFlowData() != null && !flowVersion.getFlowData().isEmpty()) {
-            dto.setFlowGraph(JsonUtils.fromJson(flowVersion.getFlowData(), FlowGraph.class));
+            dto.setFlowGraph(JsonUtils.parseObject(flowVersion.getFlowData(), FlowGraph.class));
         }
         
         dto.setStatus(flowVersion.getStatus());
@@ -139,7 +139,7 @@ public class FlowVersionDTO implements Serializable {
         
         // 如果存在流程图对象，则转换为JSON字符串
         if (this.flowGraph != null) {
-            entity.setFlowData(JsonUtils.toJson(this.flowGraph));
+            entity.setFlowData(JsonUtils.toJsonString(this.flowGraph));
         } else {
             entity.setFlowData(this.flowData);
         }
