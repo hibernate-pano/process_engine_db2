@@ -13,7 +13,7 @@
         <input 
           type="text" 
           class="w-full px-3 py-2 border rounded text-sm disabled:bg-gray-100" 
-          v-model="selectedNode.id" 
+          :value="selectedNode.id" 
           disabled
         />
       </div>
@@ -23,8 +23,8 @@
         <input 
           type="text" 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedNode.data.label" 
-          @blur="updateNodeData('label')"
+          :value="getNodeProperty('label')"
+          @input="setNodeProperty('label', ($event.target as HTMLInputElement).value)"
         />
       </div>
       
@@ -32,8 +32,8 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">节点类型</label>
         <select 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedNode.data.type"
-          @change="updateNodeData('type')"
+          :value="getNodeProperty('type')"
+          @change="setNodeProperty('type', ($event.target as HTMLSelectElement).value)"
         >
           <option value="start">开始</option>
           <option value="end">结束</option>
@@ -45,12 +45,12 @@
       </div>
       
       <!-- 节点属性 - 根据不同类型显示不同的属性编辑器 -->
-      <div v-if="selectedNode.data.type === 'action'" class="mb-4">
+      <div v-if="getNodeProperty('type') === 'action'" class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">动作类型</label>
         <select 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedNode.data.properties.actionType"
-          @change="updateNodeData('properties.actionType')"
+          :value="getNodeProperty('properties.actionType')"
+          @change="setNodeProperty('properties.actionType', ($event.target as HTMLSelectElement).value)"
         >
           <option value="httpRequest">HTTP请求</option>
           <option value="executeScript">执行脚本</option>
@@ -59,33 +59,33 @@
         </select>
       </div>
       
-      <div v-if="selectedNode.data.type === 'condition'" class="mb-4">
+      <div v-if="getNodeProperty('type') === 'condition'" class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">条件表达式</label>
         <textarea 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedNode.data.properties.condition"
-          @blur="updateNodeData('properties.condition')"
+          :value="getNodeProperty('properties.condition')"
+          @input="setNodeProperty('properties.condition', ($event.target as HTMLTextAreaElement).value)"
           rows="3"
         ></textarea>
       </div>
       
-      <div v-if="selectedNode.data.type === 'delay'" class="mb-4">
+      <div v-if="getNodeProperty('type') === 'delay'" class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">延迟时间（秒）</label>
         <input 
           type="number" 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedNode.data.properties.delaySeconds"
-          @blur="updateNodeData('properties.delaySeconds')"
+          :value="getNodeProperty('properties.delaySeconds', 0)"
+          @input="setNodeProperty('properties.delaySeconds', Number(($event.target as HTMLInputElement).value))"
         />
       </div>
       
-      <div v-if="selectedNode.data.type === 'timer'" class="mb-4">
+      <div v-if="getNodeProperty('type') === 'timer'" class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">CRON表达式</label>
         <input 
           type="text" 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedNode.data.properties.cronExpression"
-          @blur="updateNodeData('properties.cronExpression')"
+          :value="getNodeProperty('properties.cronExpression')"
+          @input="setNodeProperty('properties.cronExpression', ($event.target as HTMLInputElement).value)"
         />
       </div>
       
@@ -93,8 +93,8 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
         <textarea 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedNode.data.description"
-          @blur="updateNodeData('description')"
+          :value="getNodeProperty('description')"
+          @input="setNodeProperty('description', ($event.target as HTMLTextAreaElement).value)"
           rows="3"
         ></textarea>
       </div>
@@ -118,7 +118,7 @@
         <input 
           type="text" 
           class="w-full px-3 py-2 border rounded text-sm disabled:bg-gray-100" 
-          v-model="selectedEdge.id" 
+          :value="selectedEdge.id" 
           disabled
         />
       </div>
@@ -128,8 +128,8 @@
         <input 
           type="text" 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedEdge.data.label"
-          @blur="updateEdgeData('label')"
+          :value="getEdgeProperty('label')"
+          @input="setEdgeProperty('label', ($event.target as HTMLInputElement).value)"
         />
       </div>
       
@@ -138,19 +138,19 @@
           <input 
             type="checkbox" 
             class="mr-2" 
-            v-model="selectedEdge.data.isConditional"
-            @change="updateEdgeData('isConditional')"
+            :checked="getEdgeProperty('isConditional', false)"
+            @change="setEdgeProperty('isConditional', ($event.target as HTMLInputElement).checked)"
           />
           <span class="text-sm font-medium text-gray-700">是否条件分支</span>
         </label>
       </div>
       
-      <div v-if="selectedEdge.data.isConditional" class="mb-4">
+      <div v-if="getEdgeProperty('isConditional', false)" class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">条件表达式</label>
         <textarea 
           class="w-full px-3 py-2 border rounded text-sm" 
-          v-model="selectedEdge.data.conditionExpression"
-          @blur="updateEdgeData('conditionExpression')"
+          :value="getEdgeProperty('conditionExpression')"
+          @input="setEdgeProperty('conditionExpression', ($event.target as HTMLTextAreaElement).value)"
           rows="3"
         ></textarea>
       </div>
@@ -190,6 +190,37 @@ const selectedEdge = computed(() => {
   if (!props.selectedElementId) return null
   return getEdges.value.find((edge: any) => edge.id === props.selectedElementId)
 })
+
+// 确保节点数据属性初始化
+const ensureNodeData = () => {
+  if (!selectedNode.value) return
+  
+  if (!selectedNode.value.data) {
+    selectedNode.value.data = {}
+  }
+  
+  if (!selectedNode.value.data.properties) {
+    selectedNode.value.data.properties = {}
+  }
+}
+
+// 确保边数据属性初始化
+const ensureEdgeData = () => {
+  if (!selectedEdge.value) return
+  
+  if (!selectedEdge.value.data) {
+    selectedEdge.value.data = {}
+  }
+}
+
+// 初始化数据
+watch(selectedNode, () => {
+  ensureNodeData()
+}, { immediate: true })
+
+watch(selectedEdge, () => {
+  ensureEdgeData()
+}, { immediate: true })
 
 // 更新节点数据
 const updateNodeData = (key: string) => {
@@ -241,6 +272,54 @@ const updateEdgeData = (key: string) => {
   updateEdge(edge.id, {
     ...edge.data
   })
+}
+
+// 获取节点属性值（安全访问）
+const getNodeProperty = (property: string, defaultValue: any = '') => {
+  if (!selectedNode.value || !selectedNode.value.data) return defaultValue
+  
+  const parts = property.split('.')
+  if (parts.length === 1) {
+    return selectedNode.value.data[property] ?? defaultValue
+  } else if (parts.length === 2) {
+    const [main, sub] = parts
+    return selectedNode.value.data[main]?.[sub] ?? defaultValue
+  }
+  
+  return defaultValue
+}
+
+// 获取边属性值（安全访问）
+const getEdgeProperty = (property: string, defaultValue: any = '') => {
+  if (!selectedEdge.value || !selectedEdge.value.data) return defaultValue
+  
+  return selectedEdge.value.data[property] ?? defaultValue
+}
+
+// 设置节点属性值
+const setNodeProperty = (property: string, value: any) => {
+  if (!selectedNode.value || !selectedNode.value.data) return
+  
+  const parts = property.split('.')
+  if (parts.length === 1) {
+    selectedNode.value.data[property] = value
+  } else if (parts.length === 2) {
+    const [main, sub] = parts
+    if (!selectedNode.value.data[main]) {
+      selectedNode.value.data[main] = {}
+    }
+    selectedNode.value.data[main][sub] = value
+  }
+  
+  updateNodeData(property)
+}
+
+// 设置边属性值
+const setEdgeProperty = (property: string, value: any) => {
+  if (!selectedEdge.value || !selectedEdge.value.data) return
+  
+  selectedEdge.value.data[property] = value
+  updateEdgeData(property)
 }
 
 // 删除节点

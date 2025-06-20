@@ -1,29 +1,5 @@
 import { defineStore } from 'pinia'
-import { flowDefinitionApi, flowVersionApi } from '../api'
-
-interface FlowDefinition {
-  id: number
-  name: string
-  description: string
-  type: string
-  tags: string
-  currentVersion: number
-  status: string
-}
-
-interface FlowVersion {
-  id: number
-  flowDefinitionId: number
-  version: number
-  description: string
-  flowData: string
-  flowGraph: string
-  status: string
-  type: string
-  publishTime: string
-  publishBy: string
-  isCurrent: boolean
-}
+import { flowDefinitionApi, flowVersionApi, type FlowDefinition, type FlowVersion } from '../api'
 
 export const useFlowStore = defineStore('flow', {
   state: () => ({
