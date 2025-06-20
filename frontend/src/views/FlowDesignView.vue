@@ -180,13 +180,75 @@ const handleViewVersion = (version: FlowVersion) => {
 }
 
 // 处理设置当前版本
-const handleSetAsCurrent = (version: FlowVersion) => {
-  alert(`已将版本 v${version.version} 设置为当前版本`)
+const handleSetAsCurrent = async (version: FlowVersion) => {
+  try {
+    // 调用store中的设置当前版本方法
+    const result = await flowStore.setFlowVersionAsCurrent(version.id)
+    
+    if (result) {
+      alert(`已成功将版本 v${version.version} 设置为当前版本`)
+      
+      // 重新加载流程定义
+      if (currentFlowDefinitionId.value) {
+        await flowStore.fetchFlowDefinition(currentFlowDefinitionId.value)
+      }
+      
+      // 加载新版本数据到画布
+      try {
+        const flowData = JSON.parse(version.flowGraph)
+        if (flowCanvas.value) {
+          flowCanvas.value.importFlow(flowData)
+        }
+      } catch (error) {
+        console.error('解析流程图数据失败:', error)
+      }
+      
+      // 切换回属性面板
+      showHistoryPanel.value = false
+    }
+  } catch (error) {
+    console.error('设置当前版本失败:', error)
+    alert('设置失败: ' + (error instanceof Error ? error.message : '未知错误'))
+  }
 }
 
 // 处理回滚版本
-const handleRollbackVersion = (version: FlowVersion) => {
-  alert(`已回滚到版本 v${version.version}`)
+const handleRollbackVersion = async (version: FlowVersion) => {
+  try {
+    // 调用store中的回滚方法
+    const result = await flowStore.rollbackToVersion(version.id, `回滚至版本v${version.version}`)
+    
+    if (result) {
+      alert(`已成功回滚到版本 v${version.version}`)
+      
+      // 重新加载流程定义和版本列表
+      if (currentFlowDefinitionId.value) {
+        await flowStore.fetchFlowDefinition(currentFlowDefinitionId.value)
+        
+        // 如果回滚成功，加载新的版本数据
+        const currentVersion = flowStore.currentFlowDefinition?.currentVersion
+        if (currentVersion) {
+          await flowStore.fetchFlowVersion(currentVersion)
+          
+          // 更新画布显示
+          if (flowStore.currentFlowVersion && flowCanvas.value) {
+            try {
+              const flowData = JSON.parse(flowStore.currentFlowVersion.flowGraph)
+              flowCanvas.value.importFlow(flowData)
+            } catch (error) {
+              console.error('解析流程图数据失败:', error)
+            }
+          }
+        }
+      }
+      
+      // 切换回属性面板
+      showHistoryPanel.value = false
+    }
+  } catch (error) {
+    console.error('回滚版本失败:', error)
+    alert('回滚失败: ' + (error instanceof Error ? error.message : '未知错误'))
+  }
 }
 
 // 加载流程数据

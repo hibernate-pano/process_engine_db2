@@ -114,11 +114,40 @@
     
     <!-- 版本详情 -->
     <div v-if="selectedVersion" class="mb-4">
-      <h4 class="text-sm font-medium text-gray-700 mb-2">版本详情</h4>
+      <div class="flex justify-between items-center mb-2">
+        <h4 class="text-sm font-medium text-gray-700">版本详情</h4>
+        <div class="flex space-x-1">
+          <button 
+            v-if="!selectedVersion.isCurrent" 
+            @click="setAsCurrent(selectedVersion)" 
+            class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
+          >
+            设为当前
+          </button>
+          <button 
+            v-if="!selectedVersion.isCurrent"
+            @click="rollbackSelectedVersion()" 
+            class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200"
+          >
+            回滚到此版本
+          </button>
+        </div>
+      </div>
+      
       <div class="bg-gray-50 p-3 rounded">
+        <div class="flex items-center mb-3">
+          <div class="text-lg font-bold mr-2">v{{ selectedVersion.version }}</div>
+          <div 
+            v-if="selectedVersion.isCurrent" 
+            class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800"
+          >
+            当前版本
+          </div>
+        </div>
+        
         <div class="grid grid-cols-2 gap-y-2 text-sm">
-          <div class="text-gray-500">版本号:</div>
-          <div>v{{ selectedVersion.version }}</div>
+          <div class="text-gray-500">版本ID:</div>
+          <div>{{ selectedVersion.id }}</div>
           
           <div class="text-gray-500">发布时间:</div>
           <div>{{ formatDate(selectedVersion.publishTime) }}</div>
@@ -127,12 +156,55 @@
           <div>{{ selectedVersion.publishBy || '未知' }}</div>
           
           <div class="text-gray-500">状态:</div>
-          <div>{{ getStatusText(selectedVersion.status) }}</div>
+          <div>
+            <span 
+              class="inline-flex px-2 py-1 text-xs rounded-full"
+              :class="{
+                'bg-green-100 text-green-800': selectedVersion.status === 'PUBLISHED',
+                'bg-yellow-100 text-yellow-800': selectedVersion.status === 'DRAFT',
+                'bg-gray-100 text-gray-800': selectedVersion.status !== 'PUBLISHED' && selectedVersion.status !== 'DRAFT'
+              }"
+            >
+              {{ getStatusText(selectedVersion.status) }}
+            </span>
+          </div>
+          
+          <div class="text-gray-500">类型:</div>
+          <div>{{ selectedVersion.type || '未知' }}</div>
+          
+          <div class="text-gray-500">所属流程:</div>
+          <div>ID: {{ selectedVersion.flowDefinitionId }}</div>
         </div>
         
         <div class="mt-3">
           <div class="text-gray-500 text-sm">描述:</div>
-          <div class="mt-1 text-sm">{{ selectedVersion.description || '无描述信息' }}</div>
+          <div class="mt-1 text-sm p-2 bg-white border rounded">
+            {{ selectedVersion.description || '无描述信息' }}
+          </div>
+        </div>
+        
+        <div class="mt-3">
+          <div class="text-gray-500 text-sm mb-1">版本信息:</div>
+          <div class="flex flex-wrap gap-2">
+            <div v-if="isLatestVersion(selectedVersion)" class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+              最新版本
+            </div>
+            <div v-if="selectedVersion.isCurrent" class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
+              当前使用版本
+            </div>
+            <div v-if="isFromRollback(selectedVersion)" class="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-full">
+              从回滚创建
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="!selectedVersion.isCurrent" class="mt-4 text-center">
+          <button 
+            @click="previewVersion(selectedVersion)" 
+            class="w-full px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            预览此版本
+          </button>
         </div>
       </div>
     </div>
@@ -402,7 +474,7 @@ async function setAsCurrent(version: FlowVersion) {
   }
 }
 
-// 执行对比版本操作
+// 对比版本
 function compareSelectedVersions() {
   if (selectedVersions.value.length !== 2) return
   
@@ -412,10 +484,31 @@ function compareSelectedVersions() {
 
 // 执行回滚版本操作
 function rollbackSelectedVersion() {
-  if (selectedVersions.value.length !== 1) return
+  if (selectedVersion.value) {
+    rollbackVersion.value = selectedVersion.value
+    showRollbackModal.value = true
+  }
+}
+
+// 检查是否是最新版本
+function isLatestVersion(version: FlowVersion): boolean {
+  if (versions.value.length === 0) return false
   
-  rollbackVersion.value = selectedVersions.value[0]
-  showRollbackModal.value = true
+  // 按版本号排序，找出最大的版本号
+  const maxVersion = Math.max(...versions.value.map(v => v.version))
+  return version.version === maxVersion
+}
+
+// 检查是否来自回滚操作
+function isFromRollback(version: FlowVersion): boolean {
+  // 这里根据描述判断是否是回滚版本
+  // 实际项目中可能需要更可靠的方法，比如在版本中添加标记
+  return version.description?.includes('回滚') || false
+}
+
+// 预览版本（不切换当前版本）
+function previewVersion(version: FlowVersion) {
+  emit('view', version)
 }
 
 // 确认回滚
