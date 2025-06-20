@@ -12,6 +12,7 @@
       @node-drag-stop="onNodeDragStop"
       @pane-click="onPaneClick"
       @pane-ready="onPaneReady"
+      :node-types="nodeTypes"
     >
       <template #node-default="nodeProps">
         <FlowNode
@@ -40,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, shallowRef } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import type { NodeDragEvent } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -52,6 +53,17 @@ import '@vue-flow/minimap/dist/style.css'
 import FlowNode from './FlowNode.vue'
 import FlowEdge from './FlowEdge.vue'
 import { useFlowStore } from '../../stores/flowStore'
+
+// 定义节点类型映射
+const nodeTypes = {
+  default: FlowNode, // 默认节点类型
+  start: FlowNode,   // 开始节点类型
+  end: FlowNode,     // 结束节点类型
+  action: FlowNode,  // 动作节点类型
+  condition: FlowNode, // 条件节点类型
+  delay: FlowNode,    // 延迟节点类型
+  timer: FlowNode,    // 定时器节点类型
+}
 
 const flowStore = useFlowStore()
 const {
@@ -105,11 +117,8 @@ const onConnect = (params: any) => {
     }
   }
   
-  vfOnConnect({
-    ...params,
-    id,
-    data: newEdge.data
-  })
+  // 直接使用addEdges添加边，而不是通过vfOnConnect
+  addEdges([newEdge])
   
   // 这里可以发送API请求保存新连线
   console.log('创建连线:', newEdge)
