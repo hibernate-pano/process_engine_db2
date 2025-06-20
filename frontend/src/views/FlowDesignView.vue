@@ -1,5 +1,5 @@
 <template>
-  <div class="flow-design h-screen flex flex-col">
+  <div class="flow-design h-screen w-full flex flex-col">
     <div class="h-12 px-4 flex items-center justify-between border-b">
       <h1 class="text-lg font-bold">预案设计器</h1>
       <div class="flex gap-2">
@@ -7,7 +7,7 @@
         <button class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600" @click="publishFlow">发布</button>
       </div>
     </div>
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 w-full overflow-hidden">
       <!-- 节点面板 -->
       <div class="w-64 border-r overflow-y-auto">
         <NodePanel />
@@ -191,5 +191,6 @@ onMounted(() => {
 <style scoped>
 .flow-design {
   background-color: #f9fafb;
+  width: 100%;
 }
 </style> 

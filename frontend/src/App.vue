@@ -3,9 +3,9 @@
 </script>
 
 <template>
-  <div class="app min-h-screen bg-gray-50">
+  <div class="app min-h-screen w-full bg-gray-50">
     <header class="bg-white shadow">
-      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="w-full px-4 py-4 flex justify-between items-center">
         <h1 class="text-xl font-bold text-gray-800">预案管理系统</h1>
         <nav>
           <ul class="flex space-x-4">
@@ -16,7 +16,7 @@
         </nav>
       </div>
     </header>
-    <main class="container mx-auto px-4 py-4">
+    <main class="w-full">
       <router-view />
     </main>
   </div>
