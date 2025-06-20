@@ -141,7 +141,7 @@ public interface DeviceActionRepository extends JpaRepository<DeviceAction, Long
      * @return 设备动作列表
      */
     @Query("SELECT da FROM DeviceAction da WHERE da.deviceId = :deviceId " +
-            "ORDER BY da.startTime DESC NULLS LAST, da.scheduledTime DESC NULLS LAST, da.createTime DESC")
+            "ORDER BY da.startTime DESC NULLS LAST, da.scheduledTime DESC NULLS LAST, da.createdAt DESC")
     List<DeviceAction> findLatestByDeviceId(@Param("deviceId") String deviceId, Pageable pageable);
 
     /**
@@ -152,7 +152,7 @@ public interface DeviceActionRepository extends JpaRepository<DeviceAction, Long
      * @return 设备动作列表
      */
     @Query("SELECT da FROM DeviceAction da WHERE da.status = :status " +
-            "ORDER BY da.scheduledTime ASC NULLS LAST, da.priority ASC, da.createTime ASC")
+            "ORDER BY da.scheduledTime ASC NULLS LAST, da.priority ASC, da.createdAt ASC")
     List<DeviceAction> findPendingActions(@Param("status") String status, Pageable pageable);
 
     /**
