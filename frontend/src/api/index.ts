@@ -46,6 +46,38 @@ export interface FlowVersion {
   isCurrent: boolean
 }
 
+// 设备接口
+export interface Device {
+  id: number
+  name: string
+  type: string
+  status: string
+  ipAddress?: string
+  macAddress?: string
+  location?: string
+  description?: string
+}
+
+// 设备操作接口
+export interface DeviceOperation {
+  id: number
+  deviceId: number
+  name: string
+  description: string
+  type: string
+  parameters: DeviceOperationParameter[]
+}
+
+// 设备操作参数接口
+export interface DeviceOperationParameter {
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'select'
+  required: boolean
+  defaultValue?: any
+  description?: string
+  options?: {value: any, label: string}[] // 用于select类型
+}
+
 // 创建axios实例
 const api = axios.create({
   baseURL: 'http://localhost:8080/api',
@@ -137,4 +169,27 @@ export const flowVersionApi = {
   // 设置为当前版本
   setAsCurrent: (id: number): Promise<FlowVersion> => 
     api.put(`/flow/versions/${id}/set-as-current`)
+}
+
+// 设备API
+export const deviceApi = {
+  // 获取设备列表
+  list: (params?: any): Promise<PageResponse<Device>> => 
+    api.get('/devices', { params }),
+  
+  // 获取设备详情
+  get: (id: number): Promise<Device> => 
+    api.get(`/devices/${id}`),
+  
+  // 获取设备可用操作
+  getOperations: (deviceId: number): Promise<DeviceOperation[]> => 
+    api.get(`/devices/${deviceId}/operations`),
+  
+  // 获取操作详情
+  getOperation: (deviceId: number, operationId: number): Promise<DeviceOperation> => 
+    api.get(`/devices/${deviceId}/operations/${operationId}`),
+  
+  // 执行设备操作
+  executeOperation: (deviceId: number, operationId: number, parameters: Record<string, any>): Promise<any> => 
+    api.post(`/devices/${deviceId}/operations/${operationId}/execute`, { parameters })
 }

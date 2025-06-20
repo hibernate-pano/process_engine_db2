@@ -59,6 +59,13 @@
         </select>
       </div>
       
+      <div v-if="getNodeProperty('type') === 'action' && getNodeProperty('properties.actionType') === 'deviceControl'" class="mb-4">
+        <device-action-manager
+          v-model="deviceActions"
+          @update:modelValue="updateDeviceActions"
+        />
+      </div>
+      
       <div v-if="getNodeProperty('type') === 'condition'" class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">条件表达式</label>
         <div class="flex justify-between items-center">
@@ -189,6 +196,7 @@
 import { computed, ref, watch } from 'vue'
 import { useVueFlow } from '@vue-flow/core'
 import ConditionDialog from './condition/ConditionDialog.vue'
+import DeviceActionManager from './device/DeviceActionManager.vue'
 import type { ConditionExpression } from './condition/types'
 
 const props = defineProps<{
@@ -217,6 +225,8 @@ const conditionDialogTitle = ref('')
 const editingConditionFor = ref<'node' | 'edge' | null>(null)
 const currentConditionExpression = ref<ConditionExpression | null>(null)
 
+const deviceActions = ref<any[]>([])
+
 // 确保节点数据属性初始化
 const ensureNodeData = () => {
   if (!selectedNode.value) return
@@ -242,6 +252,16 @@ const ensureEdgeData = () => {
 // 初始化数据
 watch(selectedNode, () => {
   ensureNodeData()
+  
+  // 如果是设备控制节点，加载设备动作
+  if (selectedNode.value && 
+      getNodeProperty('type') === 'action' && 
+      getNodeProperty('properties.actionType') === 'deviceControl') {
+    const actions = getNodeProperty('properties.deviceActions', [])
+    deviceActions.value = Array.isArray(actions) ? actions : []
+  } else {
+    deviceActions.value = []
+  }
 }, { immediate: true })
 
 watch(selectedEdge, () => {
@@ -425,6 +445,11 @@ const saveConditionExpression = (expression: ConditionExpression) => {
   // 重置状态
   editingConditionFor.value = null
   currentConditionExpression.value = null
+}
+
+// 更新设备动作
+function updateDeviceActions(actions: any[]) {
+  setNodeProperty('properties.deviceActions', actions)
 }
 </script>
 
