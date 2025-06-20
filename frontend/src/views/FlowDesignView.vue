@@ -3,67 +3,193 @@
     <div class="h-12 px-4 flex items-center justify-between border-b">
       <h1 class="text-lg font-bold">预案设计器</h1>
       <div class="flex gap-2">
-        <button class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">保存</button>
-        <button class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">发布</button>
+        <button class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" @click="saveFlow">保存</button>
+        <button class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600" @click="publishFlow">发布</button>
       </div>
     </div>
     <div class="flex flex-1 overflow-hidden">
-      <div class="w-64 border-r p-2 overflow-y-auto">
-        <h2 class="text-sm font-bold mb-2">节点类型</h2>
-        <div class="grid grid-cols-2 gap-2">
-          <div class="p-2 border rounded text-center cursor-move bg-gray-50 hover:bg-gray-100">
-            开始
-          </div>
-          <div class="p-2 border rounded text-center cursor-move bg-gray-50 hover:bg-gray-100">
-            结束
-          </div>
-          <div class="p-2 border rounded text-center cursor-move bg-gray-50 hover:bg-gray-100">
-            判断
-          </div>
-          <div class="p-2 border rounded text-center cursor-move bg-gray-50 hover:bg-gray-100">
-            动作
-          </div>
-          <div class="p-2 border rounded text-center cursor-move bg-gray-50 hover:bg-gray-100">
-            延时
-          </div>
-          <div class="p-2 border rounded text-center cursor-move bg-gray-50 hover:bg-gray-100">
-            子流程
-          </div>
-        </div>
+      <!-- 节点面板 -->
+      <div class="w-64 border-r overflow-y-auto">
+        <NodePanel />
       </div>
-      <div class="flex-1 relative">
-        <!-- 这里将来是Vue Flow画布 -->
-        <div class="w-full h-full bg-gray-100 flex items-center justify-center">
-          <p class="text-gray-500">Vue Flow 流程设计画布区域</p>
-        </div>
+      
+      <!-- 流程画布 -->
+      <div class="flex-1 relative" ref="flowWrapper" @drop="onDrop" @dragover="onDragOver">
+        <FlowCanvas ref="flowCanvas" />
       </div>
-      <div class="w-80 border-l p-4 overflow-y-auto">
-        <h2 class="text-sm font-bold mb-2">节点配置</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">节点名称</label>
-            <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">节点类型</label>
-            <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-              <option>开始节点</option>
-              <option>结束节点</option>
-              <option>判断节点</option>
-              <option>动作节点</option>
-              <option>延时节点</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">节点描述</label>
-            <textarea class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" rows="3"></textarea>
-          </div>
-        </div>
+      
+      <!-- 属性面板 -->
+      <div class="w-80 border-l overflow-y-auto">
+        <PropertyPanel 
+          v-model:selectedElementId="selectedElementId"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// 未来将引入Vue Flow组件
-</script> 
+import { ref, onMounted, onUnmounted } from 'vue'
+import { VueFlow, useVueFlow } from '@vue-flow/core'
+import FlowCanvas from '../components/flow/FlowCanvas.vue'
+import NodePanel from '../components/flow/NodePanel.vue'
+import PropertyPanel from '../components/flow/PropertyPanel.vue'
+import { useFlowStore } from '../stores/flowStore'
+
+const flowStore = useFlowStore()
+const flowCanvas = ref<InstanceType<typeof FlowCanvas> | null>(null)
+const flowWrapper = ref<HTMLElement | null>(null)
+
+// 选中的元素ID（节点或边）
+const selectedElementId = ref<string>('')
+
+// Vue Flow相关
+const { onConnect, addEdges, project, viewport } = useVueFlow()
+
+// 处理节点拖拽放置
+const onDrop = (event: DragEvent) => {
+  event.preventDefault()
+  
+  if (!event.dataTransfer) return
+  
+  const data = event.dataTransfer.getData('application/vueflow')
+  if (!data) return
+  
+  try {
+    const nodeType = JSON.parse(data)
+    
+    // 获取鼠标在画布中的位置
+    const position = project({
+      x: event.clientX - (flowWrapper.value?.getBoundingClientRect().left || 0),
+      y: event.clientY - (flowWrapper.value?.getBoundingClientRect().top || 0)
+    })
+    
+    // 添加新节点
+    if (flowCanvas.value) {
+      const newNode = flowCanvas.value.addNode(nodeType.type, position)
+      selectedElementId.value = newNode.id
+    }
+  } catch (error) {
+    console.error('无法解析拖拽节点数据:', error)
+  }
+}
+
+// 处理拖拽悬停
+const onDragOver = (event: DragEvent) => {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+}
+
+// 保存流程
+const saveFlow = async () => {
+  if (!flowCanvas.value) return
+  
+  try {
+    const flowData = flowCanvas.value.exportFlow()
+    console.log('保存流程数据:', flowData)
+    
+    // 调用API保存流程数据
+    // 根据是新建还是编辑决定调用哪个API
+    // const result = await flowStore.createFlowVersion({
+    //   flowDefinitionId: flowData.id || 0,
+    //   flowGraph: JSON.stringify(flowData),
+    //   description: '流程设计更新'
+    // })
+    
+    // 保存成功提示
+    alert('流程保存成功!')
+  } catch (error) {
+    console.error('保存流程失败:', error)
+    alert('保存失败: ' + (error instanceof Error ? error.message : '未知错误'))
+  }
+}
+
+// 发布流程
+const publishFlow = async () => {
+  if (!flowCanvas.value) return
+  
+  try {
+    const flowData = flowCanvas.value.exportFlow()
+    console.log('发布流程数据:', flowData)
+    
+    // 调用API发布流程数据
+    // 可能需要先保存，再发布
+    // const result = await flowStore.publishFlowVersion(...)
+    
+    // 发布成功提示
+    alert('流程发布成功!')
+  } catch (error) {
+    console.error('发布流程失败:', error)
+    alert('发布失败: ' + (error instanceof Error ? error.message : '未知错误'))
+  }
+}
+
+// 加载流程数据
+const loadFlowData = async (flowId?: number, versionId?: number) => {
+  if (!flowCanvas.value) return
+  
+  try {
+    // 从API加载流程数据
+    // 这里模拟一个简单的流程图数据用于测试
+    const demoFlowData = {
+      id: flowId || 1,
+      name: '测试流程',
+      nodes: [
+        {
+          id: 'node_1',
+          type: 'start',
+          position: { x: 100, y: 100 },
+          data: { label: '开始', type: 'start', properties: {} }
+        },
+        {
+          id: 'node_2',
+          type: 'action',
+          position: { x: 100, y: 200 },
+          data: { label: '执行动作', type: 'action', properties: { actionType: 'httpRequest' } }
+        },
+        {
+          id: 'node_3',
+          type: 'end',
+          position: { x: 100, y: 300 },
+          data: { label: '结束', type: 'end', properties: {} }
+        }
+      ],
+      edges: [
+        {
+          id: 'edge_1_2',
+          source: 'node_1',
+          target: 'node_2',
+          data: { label: '连线1', isConditional: false }
+        },
+        {
+          id: 'edge_2_3',
+          source: 'node_2',
+          target: 'node_3',
+          data: { label: '连线2', isConditional: false }
+        }
+      ]
+    }
+    
+    // 导入流程数据到画布
+    flowCanvas.value.importFlow(demoFlowData)
+    
+  } catch (error) {
+    console.error('加载流程数据失败:', error)
+  }
+}
+
+onMounted(() => {
+  // 初始化时加载流程数据
+  setTimeout(() => {
+    loadFlowData()
+  }, 500)
+})
+</script>
+
+<style scoped>
+.flow-design {
+  background-color: #f9fafb;
+}
+</style> 
