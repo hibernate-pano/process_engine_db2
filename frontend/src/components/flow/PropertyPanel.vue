@@ -61,12 +61,17 @@
       
       <div v-if="getNodeProperty('type') === 'condition'" class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">条件表达式</label>
-        <textarea 
-          class="w-full px-3 py-2 border rounded text-sm" 
-          :value="getNodeProperty('properties.condition')"
-          @input="setNodeProperty('properties.condition', ($event.target as HTMLTextAreaElement).value)"
-          rows="3"
-        ></textarea>
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-gray-500">
+            {{ getNodeProperty('properties.condition') ? '已配置条件表达式' : '未配置条件表达式' }}
+          </span>
+          <button 
+            class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+            @click="openNodeConditionEditor"
+          >
+            编辑表达式
+          </button>
+        </div>
       </div>
       
       <div v-if="getNodeProperty('type') === 'delay'" class="mb-4">
@@ -147,12 +152,17 @@
       
       <div v-if="getEdgeProperty('isConditional', false)" class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">条件表达式</label>
-        <textarea 
-          class="w-full px-3 py-2 border rounded text-sm" 
-          :value="getEdgeProperty('conditionExpression')"
-          @input="setEdgeProperty('conditionExpression', ($event.target as HTMLTextAreaElement).value)"
-          rows="3"
-        ></textarea>
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-gray-500">
+            {{ getEdgeProperty('conditionExpression') ? '已配置条件表达式' : '未配置条件表达式' }}
+          </span>
+          <button 
+            class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+            @click="openEdgeConditionEditor"
+          >
+            编辑表达式
+          </button>
+        </div>
       </div>
       
       <div class="flex justify-end">
@@ -164,12 +174,22 @@
         </button>
       </div>
     </div>
+    
+    <!-- 条件表达式编辑对话框 -->
+    <condition-dialog
+      v-model:visible="conditionDialogVisible"
+      :title="conditionDialogTitle"
+      :expression="currentConditionExpression || undefined"
+      @save="saveConditionExpression"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useVueFlow } from '@vue-flow/core'
+import ConditionDialog from './condition/ConditionDialog.vue'
+import type { ConditionExpression } from './condition/types'
 
 const props = defineProps<{
   selectedElementId?: string
@@ -190,6 +210,12 @@ const selectedEdge = computed(() => {
   if (!props.selectedElementId) return null
   return getEdges.value.find((edge: any) => edge.id === props.selectedElementId)
 })
+
+// 条件表达式编辑对话框
+const conditionDialogVisible = ref(false)
+const conditionDialogTitle = ref('')
+const editingConditionFor = ref<'node' | 'edge' | null>(null)
+const currentConditionExpression = ref<ConditionExpression | null>(null)
 
 // 确保节点数据属性初始化
 const ensureNodeData = () => {
@@ -334,6 +360,71 @@ const removeEdge = () => {
   if (!selectedEdge.value) return
   removeEdges([selectedEdge.value.id])
   emit('update:selectedElementId', '')
+}
+
+// 打开节点条件表达式编辑器
+const openNodeConditionEditor = () => {
+  if (!selectedNode.value) return
+  
+  ensureNodeData()
+  
+  editingConditionFor.value = 'node'
+  conditionDialogTitle.value = '编辑节点条件表达式'
+  
+  try {
+    // 尝试解析现有条件表达式
+    const conditionStr = getNodeProperty('properties.condition')
+    if (conditionStr) {
+      currentConditionExpression.value = JSON.parse(conditionStr)
+    } else {
+      currentConditionExpression.value = null
+    }
+  } catch (e) {
+    console.error('解析条件表达式失败', e)
+    currentConditionExpression.value = null
+  }
+  
+  conditionDialogVisible.value = true
+}
+
+// 打开边条件表达式编辑器
+const openEdgeConditionEditor = () => {
+  if (!selectedEdge.value) return
+  
+  ensureEdgeData()
+  
+  editingConditionFor.value = 'edge'
+  conditionDialogTitle.value = '编辑连线条件表达式'
+  
+  try {
+    // 尝试解析现有条件表达式
+    const conditionStr = getEdgeProperty('conditionExpression')
+    if (conditionStr) {
+      currentConditionExpression.value = JSON.parse(conditionStr)
+    } else {
+      currentConditionExpression.value = null
+    }
+  } catch (e) {
+    console.error('解析条件表达式失败', e)
+    currentConditionExpression.value = null
+  }
+  
+  conditionDialogVisible.value = true
+}
+
+// 保存条件表达式
+const saveConditionExpression = (expression: ConditionExpression) => {
+  const expressionStr = JSON.stringify(expression)
+  
+  if (editingConditionFor.value === 'node' && selectedNode.value) {
+    setNodeProperty('properties.condition', expressionStr)
+  } else if (editingConditionFor.value === 'edge' && selectedEdge.value) {
+    setEdgeProperty('conditionExpression', expressionStr)
+  }
+  
+  // 重置状态
+  editingConditionFor.value = null
+  currentConditionExpression.value = null
 }
 </script>
 
