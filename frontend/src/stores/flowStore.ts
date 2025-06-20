@@ -106,6 +106,40 @@ export const useFlowStore = defineStore('flow', {
       } finally {
         this.loading = false
       }
+    },
+    
+    // 设置当前版本
+    async setFlowVersionAsCurrent(versionId: number) {
+      this.loading = true
+      try {
+        // 调用API设置当前版本，这里假设API存在
+        await flowVersionApi.setAsCurrent(versionId)
+        this.error = null
+        return true
+      } catch (error: any) {
+        this.error = error.message || '设置当前版本失败'
+        console.error('设置当前版本失败:', error)
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // 回滚到指定版本
+    async rollbackToVersion(versionId: number, description: string = '回滚版本') {
+      this.loading = true
+      try {
+        // 调用API回滚版本，这里假设API存在
+        await flowVersionApi.rollback(versionId, description)
+        this.error = null
+        return true
+      } catch (error: any) {
+        this.error = error.message || '回滚版本失败'
+        console.error('回滚版本失败:', error)
+        return false
+      } finally {
+        this.loading = false
+      }
     }
   }
 })

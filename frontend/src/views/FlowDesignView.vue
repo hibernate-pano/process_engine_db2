@@ -5,6 +5,18 @@
       <div class="flex gap-2">
         <button class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" @click="saveFlow">保存</button>
         <button class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600" @click="publishFlow">发布</button>
+        <button 
+          class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 flex items-center" 
+          @click="toggleHistoryPanel"
+        >
+          <span class="mr-1">历史版本</span>
+          <svg v-if="showHistoryPanel" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+          <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </div>
     <div class="flex flex-1 w-full overflow-hidden">
@@ -18,11 +30,22 @@
         <FlowCanvas ref="flowCanvas" />
       </div>
       
-      <!-- 属性面板 -->
+      <!-- 侧边栏区域 -->
       <div class="w-80 border-l overflow-y-auto">
-        <PropertyPanel 
-          v-model:selectedElementId="selectedElementId"
-        />
+        <!-- 属性面板/历史面板切换 -->
+        <div v-if="showHistoryPanel">
+          <HistoryPanel 
+            :flowDefinitionId="currentFlowDefinitionId" 
+            @view="handleViewVersion"
+            @setAsCurrent="handleSetAsCurrent"
+            @rollback="handleRollbackVersion"
+          />
+        </div>
+        <div v-else>
+          <PropertyPanel 
+            v-model:selectedElementId="selectedElementId"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -34,7 +57,9 @@ import { VueFlow, useVueFlow } from '@vue-flow/core'
 import FlowCanvas from '../components/flow/FlowCanvas.vue'
 import NodePanel from '../components/flow/NodePanel.vue'
 import PropertyPanel from '../components/flow/PropertyPanel.vue'
+import HistoryPanel from '../components/flow/HistoryPanel.vue'
 import { useFlowStore } from '../stores/flowStore'
+import type { FlowVersion } from '../api'
 
 const flowStore = useFlowStore()
 const flowCanvas = ref<InstanceType<typeof FlowCanvas> | null>(null)
@@ -43,8 +68,19 @@ const flowWrapper = ref<HTMLElement | null>(null)
 // 选中的元素ID（节点或边）
 const selectedElementId = ref<string>('')
 
+// 显示历史面板
+const showHistoryPanel = ref(false)
+
+// 当前流程定义ID (实际项目中应从路由参数或状态管理中获取)
+const currentFlowDefinitionId = ref<number | undefined>(1)
+
 // Vue Flow相关
 const { onConnect, addEdges, project, viewport } = useVueFlow()
+
+// 切换历史面板显示
+const toggleHistoryPanel = () => {
+  showHistoryPanel.value = !showHistoryPanel.value
+}
 
 // 处理节点拖拽放置
 const onDrop = (event: DragEvent) => {
@@ -124,6 +160,33 @@ const publishFlow = async () => {
     console.error('发布流程失败:', error)
     alert('发布失败: ' + (error instanceof Error ? error.message : '未知错误'))
   }
+}
+
+// 处理查看历史版本
+const handleViewVersion = (version: FlowVersion) => {
+  if (!flowCanvas.value) return
+  
+  try {
+    // 假设我们需要从flowGraph字段加载流程图数据
+    const flowData = JSON.parse(version.flowGraph)
+    flowCanvas.value.importFlow(flowData)
+    
+    // 切换回属性面板以便查看和编辑
+    showHistoryPanel.value = false
+  } catch (error) {
+    console.error('加载历史版本失败:', error)
+    alert('加载历史版本失败: ' + (error instanceof Error ? error.message : '未知错误'))
+  }
+}
+
+// 处理设置当前版本
+const handleSetAsCurrent = (version: FlowVersion) => {
+  alert(`已将版本 v${version.version} 设置为当前版本`)
+}
+
+// 处理回滚版本
+const handleRollbackVersion = (version: FlowVersion) => {
+  alert(`已回滚到版本 v${version.version}`)
 }
 
 // 加载流程数据

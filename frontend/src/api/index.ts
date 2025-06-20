@@ -168,7 +168,11 @@ export const flowVersionApi = {
   
   // 设置为当前版本
   setAsCurrent: (id: number): Promise<FlowVersion> => 
-    api.put(`/flow/versions/${id}/set-as-current`)
+    api.put(`/flow/versions/${id}/set-as-current`),
+  
+  // 回滚到指定版本
+  rollback: (id: number, description: string = '回滚版本'): Promise<FlowVersion> => 
+    api.post(`/flow/versions/${id}/rollback`, { description })
 }
 
 // 设备API
