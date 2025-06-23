@@ -17,6 +17,40 @@ declare module '@vue-flow/core' {
     targetPosition?: Position;
     borderRadius?: number;
   }): string;
+  
+  // 添加连线相关类型
+  export enum ConnectionMode {
+    Strict = 'strict',
+    Loose = 'loose'
+  }
+  
+  export interface Connection {
+    source: string;
+    target: string;
+    sourceHandle?: string | null;
+    targetHandle?: string | null;
+  }
+  
+  export interface Edge {
+    id: string;
+    source: string;
+    target: string;
+    sourceHandle?: string | null;
+    targetHandle?: string | null;
+    type?: string;
+    data?: any;
+    style?: any;
+    animated?: boolean;
+    selected?: boolean;
+    zIndex?: number;
+  }
+  
+  export interface Handle {
+    id?: string | null;
+    nodeId: string;
+    position: Position;
+    type: 'source' | 'target';
+  }
 }
 
 declare module '@vue-flow/background' {

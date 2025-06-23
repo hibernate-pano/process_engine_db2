@@ -268,6 +268,23 @@ watch(selectedEdge, () => {
   ensureEdgeData()
 }, { immediate: true })
 
+// 监听selectedElementId变化，这对于双击节点交互尤其重要
+watch(() => props.selectedElementId, (newId) => {
+  console.log('属性面板: 选中元素ID变更为', newId)
+  if (newId) {
+    // 刷新节点/边数据
+    const node = findNode(newId)
+    if (node) {
+      ensureNodeData()
+    } else {
+      const edge = getEdges.value.find((e: any) => e.id === newId)
+      if (edge) {
+        ensureEdgeData()
+      }
+    }
+  }
+}, { immediate: true })
+
 // 更新节点数据
 const updateNodeData = (key: string) => {
   if (!selectedNode.value) return

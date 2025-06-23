@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useVueFlow } from '@vue-flow/core'
 import type { Position } from '@vue-flow/core'
 
@@ -47,7 +47,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['click'])
 
-const { edges } = useVueFlow()
+const { edges, updateEdge } = useVueFlow()
 
 // 获取当前边的数据
 const edge = computed(() => {
@@ -80,7 +80,7 @@ const edgePath = computed(() => {
 
 // 边的终点标记
 const markerEnd = computed(() => {
-  return props.markerEnd || 'url(#edge-arrow)'
+  return props.markerEnd || 'url(#vue-flow__arrow)'
 })
 
 // 计算标签位置
@@ -98,6 +98,7 @@ const labelStyles = computed(() => {
   return {
     transform: `translate(-50%, -50%) translate(${centerX}px, ${centerY}px)`,
     pointerEvents: 'all' as const,
+    zIndex: 1000,
   }
 })
 
@@ -120,18 +121,26 @@ const onLabelClick = (event: MouseEvent) => {
     event
   })
 }
+
+// 确保边在视觉上正确
+watchEffect(() => {
+  if (edge.value && edge.value.id === props.id) {
+    // 这里可以添加额外的边更新逻辑
+  }
+})
 </script>
 
 <style scoped>
 .flow-edge {
   stroke: #555;
   stroke-width: 2;
-  transition: stroke 0.3s ease;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;
 }
 
 .flow-edge.selected {
   stroke: #3b82f6;
   stroke-width: 3;
+  z-index: 1001 !important;
 }
 
 .edge-label {

@@ -27,7 +27,12 @@
       
       <!-- 流程画布 -->
       <div class="flex-1 relative" ref="flowWrapper" @drop="onDrop" @dragover="onDragOver">
-        <FlowCanvas ref="flowCanvas" />
+        <FlowCanvas 
+          ref="flowCanvas"
+          v-model:selectedElementId="selectedElementId" 
+          @flow-node-selected="handleNodeSelected"
+          @flow-node-dbclick="handleNodeDbClick"
+        />
       </div>
       
       <!-- 侧边栏区域 -->
@@ -52,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import FlowCanvas from '../components/flow/FlowCanvas.vue'
 import NodePanel from '../components/flow/NodePanel.vue'
@@ -67,6 +72,11 @@ const flowWrapper = ref<HTMLElement | null>(null)
 
 // 选中的元素ID（节点或边）
 const selectedElementId = ref<string>('')
+
+// 监听selectedElementId的变化，便于调试
+watch(selectedElementId, (newId) => {
+  console.log('FlowDesignView: 选中的元素ID变化为', newId)
+}, { immediate: true })
 
 // 显示历史面板
 const showHistoryPanel = ref(false)
@@ -303,6 +313,21 @@ const loadFlowData = async (flowId?: number, versionId?: number) => {
   } catch (error) {
     console.error('加载流程数据失败:', error)
   }
+}
+
+// 处理节点选中事件
+const handleNodeSelected = (nodeInfo: { id: string, type: string, data: any }) => {
+  // 确保选中 ID 更新
+  selectedElementId.value = nodeInfo.id
+  console.log('节点被选中:', nodeInfo)
+}
+
+// 处理节点双击事件
+const handleNodeDbClick = (nodeInfo: { id: string, type: string, data: any }) => {
+  console.log('节点被双击:', nodeInfo)
+  
+  // 更新选中的节点ID，这样PropertyPanel就会显示正确的节点
+  selectedElementId.value = nodeInfo.id
 }
 
 onMounted(() => {
